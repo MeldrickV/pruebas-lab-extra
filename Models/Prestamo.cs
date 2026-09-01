@@ -27,6 +27,7 @@ namespace LabInventario.Models
         public int Id { get; set; }
         public string AlumnoNombre { get; set; } = string.Empty;
         public string NumeroCuenta { get; set; } = string.Empty;
+        public int MaterialId { get; set; }
         public string MaterialNombre { get; set; } = string.Empty;
         public string CodigoBarras { get; set; } = string.Empty;
         public int Cantidad { get; set; }

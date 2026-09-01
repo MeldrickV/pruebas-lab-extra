@@ -91,6 +91,7 @@ namespace LabInventario.Data
 
             comando.CommandText = $@"
                 SELECT p.Id, a.Nombre AS AlumnoNombre, a.NumeroCuenta,
+                       p.MaterialId,
                        m.Nombre AS MaterialNombre, m.CodigoBarras,
                        p.Cantidad, p.FechaSalida, p.FechaRegreso, p.Estado
                 FROM prestamos p
@@ -107,6 +108,7 @@ namespace LabInventario.Data
                     Id = lector.GetInt32(lector.GetOrdinal("Id")),
                     AlumnoNombre = lector.GetString(lector.GetOrdinal("AlumnoNombre")),
                     NumeroCuenta = lector.GetString(lector.GetOrdinal("NumeroCuenta")),
+                    MaterialId = lector.GetInt32(lector.GetOrdinal("MaterialId")),
                     MaterialNombre = lector.GetString(lector.GetOrdinal("MaterialNombre")),
                     CodigoBarras = lector.GetString(lector.GetOrdinal("CodigoBarras")),
                     Cantidad = lector.GetInt32(lector.GetOrdinal("Cantidad")),
