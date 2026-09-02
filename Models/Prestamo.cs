@@ -21,6 +21,7 @@ namespace LabInventario.Models
     // Proyección "aplanada" de un préstamo ya combinado (JOIN) con los datos
     // del alumno y del material. Se usa directamente para alimentar el
     // DataGridView de la pestaña de historial, sin más consultas.
+    
     public class PrestamoDetalle
     {
         public int Id { get; set; }
