@@ -129,11 +129,22 @@ namespace LabInventario.Views
             raiz.Children.Add(_grid);
 
             Content = raiz;
-            Cargar();
+            Actualizar();
         }
 
-        /// <summary>Recarga los datos desde la base de datos. Se llama cada vez que esta pestaña se vuelve visible.</summary>
-        public void Actualizar() => Cargar();
+        /// <summary>
+        /// Recarga los datos desde la base de datos. Se llama cada vez que
+        /// esta pestaña se vuelve visible. De paso, purga los préstamos ya
+        /// devueltos con más de 7 días de antigüedad (ver
+        /// <see cref="PrestamoRepository.EliminarDevueltosAntiguos"/>): así
+        /// el historial de devoluciones queda disponible el tiempo
+        /// suficiente para revisarlo, sin acumularse indefinidamente.
+        /// </summary>
+        public void Actualizar()
+        {
+            _repo.EliminarDevueltosAntiguos();
+            Cargar();
+        }
 
         private void Cargar()
         {
@@ -141,7 +152,10 @@ namespace LabInventario.Views
 
             var detallados = _repo.ListarDetallado(_txtFiltro.Text?.Trim() ?? "", _chkSoloActivos.IsChecked == true);
             var activos = detallados.Where(p => p.Estado == "Activo").ToList();
-            var devueltos = detallados.Where(p => p.Estado != "Activo").ToList();
+            var devueltos = detallados
+                .Where(p => p.Estado != "Activo")
+                .OrderByDescending(p => p.FechaRegreso ?? p.FechaSalida) // las devoluciones más recientes primero
+                .ToList();
 
             var grupos = activos
                 .GroupBy(p => (p.AlumnoId, p.MaterialId))
