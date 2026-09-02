@@ -24,7 +24,8 @@ namespace LabInventario.Views
     ///    en que se escaneen alumno/material la primera vez.
     /// 2. Una vez identificado el alumno, cada material que se escanea se
     ///    agrega a una lista temporal en memoria. Si el MISMO material se
-    ///    escanea de nuevo, no se duplica la fila: se le suma la cantidad.
+    ///    escanea de nuevo, no se duplica la fila: se le suma la cantidad
+    ///    (esto aplica tanto para salidas como para entradas/devoluciones).
     /// 3. Para terminar y enviar la solicitud, basta con presionar Enter en
     ///    el cuadro de escaneo estando vacío (o presionar el botón
     ///    ACEPTAR). Todo el lote se registra con la MISMA fecha/hora.
@@ -99,7 +100,7 @@ namespace LabInventario.Views
             var panelCaptura = new StackPanel { Spacing = 8 };
             panelCaptura.Children.Add(_lblEscaneo);
             panelCaptura.Children.Add(_txtEscaneo);
-            panelCaptura.Children.Add(new TextBlock { Text = "Cantidad por escaneo (para salidas):" });
+            panelCaptura.Children.Add(new TextBlock { Text = "Cantidad por escaneo:" });
             panelCaptura.Children.Add(_numCantidad);
             panelCaptura.Children.Add(lblAyuda);
             panelCaptura.Children.Add(btnLimpiar);
@@ -216,24 +217,12 @@ namespace LabInventario.Views
             }
 
             var existente = _listaTemporal.FirstOrDefault(i => i.Codigo == material.CodigoBarras);
+            var cantidadEscaneo = (int)(_numCantidad.Value ?? 1);
 
-            if (_radioEntrada.IsChecked == true)
-            {
-                if (existente is not null)
-                {
-                    MostrarError($"'{material.Nombre}' ya está en la lista de devolución.");
-                    return;
-                }
-                _listaTemporal.Add(new ItemEscaneado { Codigo = material.CodigoBarras, Nombre = material.Nombre, Cantidad = 1 });
-            }
+            if (existente is not null)
+                existente.Cantidad += cantidadEscaneo;
             else
-            {
-                var cantidadEscaneo = (int)(_numCantidad.Value ?? 1);
-                if (existente is not null)
-                    existente.Cantidad += cantidadEscaneo;
-                else
-                    _listaTemporal.Add(new ItemEscaneado { Codigo = material.CodigoBarras, Nombre = material.Nombre, Cantidad = cantidadEscaneo });
-            }
+                _listaTemporal.Add(new ItemEscaneado { Codigo = material.CodigoBarras, Nombre = material.Nombre, Cantidad = cantidadEscaneo });
 
             _numCantidad.Value = 1;
             RefrescarLista();
@@ -282,7 +271,7 @@ namespace LabInventario.Views
                     if (_radioSalida.IsChecked == true)
                         _servicio.RegistrarSalida(_alumnoActual.NumeroCuenta, item.Codigo, item.Cantidad, fechaOperacion);
                     else
-                        _servicio.RegistrarEntrada(_alumnoActual.NumeroCuenta, item.Codigo, fechaOperacion);
+                        _servicio.RegistrarEntrada(_alumnoActual.NumeroCuenta, item.Codigo, item.Cantidad, fechaOperacion);
 
                     exitos++;
                 }
