@@ -34,6 +34,21 @@ namespace LabInventario.Data
             comando.ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Reduce la cantidad de un préstamo SIN cerrarlo (devolución
+        /// parcial): el registro sigue "Activo", con su misma fecha de
+        /// salida original, pero con menos unidades pendientes.
+        /// </summary>
+        public void ActualizarCantidad(int idPrestamo, int nuevaCantidad)
+        {
+            using var conexion = _db.ObtenerConexion();
+            using var comando = conexion.CreateCommand();
+            comando.CommandText = "UPDATE prestamos SET Cantidad = $cantidad WHERE Id = $id";
+            comando.Parameters.AddWithValue("$cantidad", nuevaCantidad);
+            comando.Parameters.AddWithValue("$id", idPrestamo);
+            comando.ExecuteNonQuery();
+        }
+
         public void Eliminar(int idPrestamo)
         {
             using var conexion = _db.ObtenerConexion();
@@ -68,9 +83,30 @@ namespace LabInventario.Data
             return lector.Read() ? Mapear(lector) : null;
         }
 
-        // Devuelve filas ya combinadas (JOIN) con el nombre del alumno y del
-        // material, listas para mostrarse directamente en el DataGridView.
+        /// <summary>
+        /// Todos los préstamos activos de un alumno para un material,
+        /// ordenados del más antiguo al más reciente (orden FIFO: el que
+        /// salió primero es el primero en saldarse al devolver).
+        /// </summary>
+        public List<Prestamo> ListarActivosPorAlumnoYMaterial(int alumnoId, int materialId)
+        {
+            var resultado = new List<Prestamo>();
+            using var conexion = _db.ObtenerConexion();
+            using var comando = conexion.CreateCommand();
+            comando.CommandText = @"
+                SELECT * FROM prestamos
+                WHERE AlumnoId = $alumnoId AND MaterialId = $materialId AND Estado = 'Activo'
+                ORDER BY FechaSalida ASC";
+            comando.Parameters.AddWithValue("$alumnoId", alumnoId);
+            comando.Parameters.AddWithValue("$materialId", materialId);
+            using var lector = comando.ExecuteReader();
+            while (lector.Read())
+                resultado.Add(Mapear(lector));
+            return resultado;
+        }
 
+        // Devuelve filas ya combinadas (JOIN) con el nombre del alumno y del
+        // material, listas para mostrarse directamente en el DataGrid.
         public List<PrestamoDetalle> ListarDetallado(string filtro = "", bool soloActivos = false)
         {
             var resultado = new List<PrestamoDetalle>();
@@ -90,8 +126,8 @@ namespace LabInventario.Data
             var clausulaWhere = condiciones.Count > 0 ? "WHERE " + string.Join(" AND ", condiciones) : "";
 
             comando.CommandText = $@"
-                SELECT p.Id, a.Nombre AS AlumnoNombre, a.NumeroCuenta,
-                       p.MaterialId,
+                SELECT p.Id, p.AlumnoId, p.MaterialId,
+                       a.Nombre AS AlumnoNombre, a.NumeroCuenta,
                        m.Nombre AS MaterialNombre, m.CodigoBarras,
                        p.Cantidad, p.FechaSalida, p.FechaRegreso, p.Estado
                 FROM prestamos p
@@ -106,9 +142,10 @@ namespace LabInventario.Data
                 resultado.Add(new PrestamoDetalle
                 {
                     Id = lector.GetInt32(lector.GetOrdinal("Id")),
+                    AlumnoId = lector.GetInt32(lector.GetOrdinal("AlumnoId")),
+                    MaterialId = lector.GetInt32(lector.GetOrdinal("MaterialId")),
                     AlumnoNombre = lector.GetString(lector.GetOrdinal("AlumnoNombre")),
                     NumeroCuenta = lector.GetString(lector.GetOrdinal("NumeroCuenta")),
-                    MaterialId = lector.GetInt32(lector.GetOrdinal("MaterialId")),
                     MaterialNombre = lector.GetString(lector.GetOrdinal("MaterialNombre")),
                     CodigoBarras = lector.GetString(lector.GetOrdinal("CodigoBarras")),
                     Cantidad = lector.GetInt32(lector.GetOrdinal("Cantidad")),
