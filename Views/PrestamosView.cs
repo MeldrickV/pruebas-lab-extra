@@ -176,6 +176,31 @@ namespace LabInventario.Views
 
             foreach (var grupo in grupos)
             {
+                // Si el alumno solo tiene UNA fecha de salida pendiente de
+                // este material, se muestra como fila normal (sin flecha
+                // de expandir): el agrupado con detalle solo tiene sentido
+                // cuando hay varias fechas distintas por reconciliar.
+                if (grupo.Detalle.Count == 1)
+                {
+                    var unico = grupo.Detalle[0];
+                    _filas.Add(new FilaPrestamo
+                    {
+                        EsGrupo = false,
+                        PrestamoId = unico.Id,
+                        AlumnoId = grupo.AlumnoId,
+                        MaterialId = grupo.MaterialId,
+                        Alumno = grupo.Alumno,
+                        Cuenta = grupo.Cuenta,
+                        Material = grupo.Material,
+                        Codigo = grupo.Codigo,
+                        Cantidad = unico.Cantidad,
+                        Salida = unico.FechaSalida.ToString("yyyy-MM-dd HH:mm:ss"),
+                        Regreso = "-",
+                        Estado = "Activo",
+                    });
+                    continue;
+                }
+
                 var expandido = _gruposExpandidos.Contains((grupo.AlumnoId, grupo.MaterialId));
 
                 _filas.Add(new FilaPrestamo
@@ -189,7 +214,7 @@ namespace LabInventario.Views
                     Material = grupo.Material,
                     Codigo = grupo.Codigo,
                     Cantidad = grupo.Total,
-                    Salida = grupo.UltimaSalida.ToString("yyyy-MM-dd HH:mm:ss") + (grupo.Detalle.Count > 1 ? "  (última)" : ""),
+                    Salida = grupo.UltimaSalida.ToString("yyyy-MM-dd HH:mm:ss") + "  (última)",
                     Regreso = "-",
                     Estado = "Activo",
                 });
