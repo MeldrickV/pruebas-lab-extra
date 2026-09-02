@@ -1,17 +1,21 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using Avalonia.Themes.Fluent;
+using Avalonia.Markup.Xaml;
+using LabInventario.Helpers;
 using LabInventario.Services;
 using LabInventario.Windows;
-using LabInventario.Helpers;
 
 namespace LabInventario
 {
     /// <summary>
-    /// Clase de aplicación. Se construye toda en C# (sin .axaml) para
-    /// mantener el mismo estilo "todo en código" que tenía la versión
-    /// original en Windows Forms.
+    /// Clase de aplicación. Los estilos (FluentTheme + tema del DataGrid)
+    /// se declaran en App.axaml, que es el único archivo .axaml del
+    /// proyecto: Avalonia necesita al menos uno para activar su mecanismo
+    /// de carga de recursos "avares://", incluso para recursos que vienen
+    /// de paquetes de terceros como Avalonia.Controls.DataGrid. El resto
+    /// de la aplicación (ventanas, vistas, diálogos) sigue construido
+    /// 100% en C#, igual que antes.
     ///
     /// Reproduce el ciclo que antes vivía en Program.cs: se muestra
     /// LoginWindow, y si se entra correctamente se abre MainWindow. Si
@@ -19,20 +23,21 @@ namespace LabInventario
     /// cierra y el ciclo vuelve a mostrar el login; si se cierra de
     /// cualquier otra forma (o se cancela el login), la aplicación termina.
     /// </summary>
-    public class App : Application
+    public partial class App : Application
     {
         public override void Initialize()
         {
-            Styles.Add(new FluentTheme());
-            Styles.Add(new Avalonia.Markup.Xaml.Styling.StyleInclude(new Uri("avares://LabInventario/"))
-            {
-                Source = new Uri("avares://Avalonia.Controls.DataGrid/Themes/Fluent.axaml")
-            });
+            AvaloniaXamlLoader.Load(this);
             RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
         }
 
         public override void OnFrameworkInitializationCompleted()
         {
+            // Red de seguridad: si una excepción escapa de cualquier lugar
+            // que no esté ya envuelto en Errores.Ejecutar (por ejemplo, un
+            // manejador de menú), al menos queda registrada en
+            // "errores.log" junto al ejecutable en vez de perderse en
+            // silencio.
             AppDomain.CurrentDomain.UnhandledException += (_, e) =>
             {
                 if (e.ExceptionObject is Exception ex) Errores.RegistrarEnArchivo(ex);
@@ -42,7 +47,7 @@ namespace LabInventario
                 Errores.RegistrarEnArchivo(e.Exception);
                 e.SetObserved();
             };
-            
+
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 // Nosotros controlamos manualmente cuándo termina la app
