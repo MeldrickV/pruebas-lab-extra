@@ -40,13 +40,13 @@ namespace LabInventario.Views
             };
 
             var btnNuevo = new Button { Content = "Nuevo alumno", Width = 130 };
-            btnNuevo.Click += async (_, _) => await Nuevo();
-
+            btnNuevo.Click += (_, _) => Errores.Ejecutar(VentanaPropietaria(), Nuevo);
+            
             var btnEditar = new Button { Content = "Editar", Width = 100 };
-            btnEditar.Click += async (_, _) => await Editar();
-
+            btnEditar.Click += (_, _) => Errores.Ejecutar(VentanaPropietaria(), Editar);
+            
             var btnEliminar = new Button { Content = "Eliminar", Width = 100 };
-            btnEliminar.Click += async (_, _) => await Eliminar();
+            btnEliminar.Click += (_, _) => Errores.Ejecutar(VentanaPropietaria(), Eliminar);
 
             _txtFiltro.TextChanged += (_, _) => Cargar();
 
