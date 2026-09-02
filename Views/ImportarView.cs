@@ -50,7 +50,7 @@ namespace LabInventario.Views
             panelOpciones.Children.Add(_cmbEntidad);
 
             var btnImportar = new Button { Content = "Seleccionar archivo e importar...", Width = 260, Height = 32 };
-            btnImportar.Click += async (_, _) => await IniciarImportacion();
+            btnImportar.Click += (_, _) => Errores.Ejecutar(VentanaPropietaria(), IniciarImportacion);
 
             var lblLog = new TextBlock { Text = "Registro de importaciones:" };
 
