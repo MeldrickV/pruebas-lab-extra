@@ -26,6 +26,7 @@ namespace LabInventario
             // Equivalente a ApplicationConfiguration.Initialize() de WinForms:
             // registra el tema visual (Fluent) que usarán todas las ventanas.
             Styles.Add(new FluentTheme());
+            Styles.Add(new Avalonia.Controls.DataGridFluentTheme());
             RequestedThemeVariant = Avalonia.Styling.ThemeVariant.Light;
         }
 
