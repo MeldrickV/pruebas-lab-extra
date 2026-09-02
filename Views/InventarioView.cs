@@ -82,6 +82,9 @@ namespace LabInventario.Views
                 _filas.Add(new FilaMaterial { Id = m.Id, Codigo = m.CodigoBarras, Nombre = m.Nombre, Total = m.CantidadTotal, Disponible = m.CantidadDisponible });
         }
 
+        /// <summary>Recarga los datos desde la base de datos. Se llama cada vez que esta pestaña se vuelve visible.</summary>
+        public void Actualizar() => Cargar();
+
         private Window? VentanaPropietaria() =>
             (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
 
