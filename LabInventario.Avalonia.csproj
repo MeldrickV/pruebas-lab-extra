@@ -12,13 +12,6 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- Archivos .axaml del proyecto (por ahora solo App.axaml). Es lo que
-         activa el mecanismo de Avalonia para cargar recursos "avares://",
-         necesario incluso para el tema del DataGrid que viene de otro
-         paquete NuGet. -->
-    <AvaloniaResource Include="**\*.axaml" />
-  </ItemGroup>
 
   <ItemGroup>
     <!-- UI multiplataforma (reemplaza a Windows Forms) -->
