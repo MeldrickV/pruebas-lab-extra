@@ -63,7 +63,7 @@ namespace LabInventario.Views
             _chkSoloActivos.PropertyChanged += (_, e) => { if (e.Property == ToggleButton.IsCheckedProperty) Cargar(); };
 
             var btnDevolver = new Button { Content = "Marcar como devuelto", Width = 180 };
-            btnDevolver.Click += async (_, _) => await MarcarDevuelto();
+            btnDevolver.Click += (_, _) => Errores.Ejecutar(VentanaPropietaria(), MarcarDevuelto);
 
             var panelSuperior = new StackPanel
             {
