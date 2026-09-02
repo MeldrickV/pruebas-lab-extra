@@ -77,7 +77,10 @@ namespace LabInventario.Views
             foreach (var a in _repo.Listar(_txtFiltro.Text?.Trim() ?? ""))
                 _filas.Add(new FilaAlumno { Id = a.Id, Nombre = a.Nombre, Cuenta = a.NumeroCuenta });
         }
-
+        
+        /// <summary>Recarga los datos desde la base de datos. Se llama cada vez que esta pestaña se vuelve visible.</summary>
+        public void Actualizar() => Cargar();
+        
         private Window? VentanaPropietaria() =>
             (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
 
