@@ -51,6 +51,16 @@ namespace LabInventario.Windows
                 tabs.Items.Add(new TabItem { Header = "Importar datos", Content = new ImportarView() });
             }
 
+            tabs.SelectionChanged += (_, _) =>
+            {
+                if (tabs.SelectedItem is TabItem { Content: AlumnosView alumnosView })
+                    alumnosView.Actualizar();
+                else if (tabs.SelectedItem is TabItem { Content: InventarioView inventarioView })
+                    inventarioView.Actualizar();
+                else if (tabs.SelectedItem is TabItem { Content: PrestamosView prestamosView })
+                    prestamosView.Actualizar();
+            };
+
             var raiz = new DockPanel();
             DockPanel.SetDock(menu, Dock.Top);
             raiz.Children.Add(menu);
