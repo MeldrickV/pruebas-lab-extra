@@ -24,8 +24,7 @@ namespace LabInventario.Views
     ///    en que se escaneen alumno/material la primera vez.
     /// 2. Una vez identificado el alumno, cada material que se escanea se
     ///    agrega a una lista temporal en memoria. Si el MISMO material se
-    ///    escanea de nuevo, no se duplica la fila: se le suma la cantidad
-    ///    (esto aplica tanto para salidas como para entradas/devoluciones).
+    ///    escanea de nuevo, no se duplica la fila: se le suma la cantidad.
     /// 3. Para terminar y enviar la solicitud, basta con presionar Enter en
     ///    el cuadro de escaneo estando vacío (o presionar el botón
     ///    ACEPTAR). Todo el lote se registra con la MISMA fecha/hora.
