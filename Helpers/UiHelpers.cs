@@ -102,7 +102,42 @@ namespace LabInventario.Helpers
             return archivo?.TryGetLocalPath();
         }
     }
-
+    /// <summary>
+    /// Envuelve el manejador de un botón/evento en un try/catch y muestra
+    /// cualquier excepción en un diálogo, en vez de dejar que se pierda en
+    /// silencio (que es lo que pasa por defecto con "async void" si nadie
+    /// la atrapa: la operación se corta a medias, sin mensaje ni traza,
+    /// y desde la UI parece que "no hizo nada").
+    /// </summary>
+    public static class Errores
+    {
+        public static async void Ejecutar(Window? propietaria, Func<Task> accion)
+        {
+            try
+            {
+                await accion();
+            }
+            catch (Exception ex)
+            {
+                RegistrarEnArchivo(ex);
+                if (propietaria is not null)
+                    await Dialogos.MostrarError(propietaria, ex.Message, "Ocurrió un error");
+            }
+        }
+    
+        public static void RegistrarEnArchivo(Exception ex)
+        {
+            try
+            {
+                var ruta = Path.Combine(AppContext.BaseDirectory, "errores.log");
+                File.AppendAllText(ruta, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}\n\n");
+            }
+            catch
+            {
+                // Si ni siquiera se puede escribir el log, no hay nada más que hacer aquí.
+            }
+        }
+    }
     /// <summary>
     /// Avalonia no incluye un control "GroupBox" propio (como sí tenía
     /// WinForms). Este helper arma un recuadro con encabezado en negritas
