@@ -106,6 +106,9 @@ namespace LabInventario.Views
             }
         }
 
+        /// <summary>Recarga los datos desde la base de datos. Se llama cada vez que esta pestaña se vuelve visible.</summary>
+        public void Actualizar() => Cargar();
+
         private Window? VentanaPropietaria() =>
             (Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
 
