@@ -173,5 +173,28 @@ namespace LabInventario.Data
                 ? EstadoPrestamo.Activo
                 : EstadoPrestamo.Devuelto,
         };
+
+        /// <summary>
+        /// Borra los préstamos ya devueltos con más de <paramref name="dias"/>
+        /// días de antigüedad (contados desde su FechaRegreso). Se llama
+        /// automáticamente al entrar a la pestaña de Historial y al iniciar
+        /// sesión, así el historial de devoluciones queda disponible un
+        /// tiempo prudente para revisión (por ejemplo, si algo se regresó
+        /// dañado y hay que saber quién y cuándo) sin acumularse para
+        /// siempre.
+        /// </summary>
+        public int EliminarDevueltosAntiguos(int dias = 7)
+        {
+            var limite = DateTime.Now.AddDays(-dias);
+            using var conexion = _db.ObtenerConexion();
+            using var comando = conexion.CreateCommand();
+            comando.CommandText = @"
+                DELETE FROM prestamos
+                WHERE Estado = 'Devuelto'
+                  AND FechaRegreso IS NOT NULL
+                  AND FechaRegreso < $limite";
+            comando.Parameters.AddWithValue("$limite", limite.ToString("yyyy-MM-dd HH:mm:ss"));
+            return comando.ExecuteNonQuery();
+        }
     }
 }
