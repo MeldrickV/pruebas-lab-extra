@@ -4,6 +4,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Themes.Fluent;
 using LabInventario.Services;
 using LabInventario.Windows;
+using LabInventario.Helpers;
 
 namespace LabInventario
 {
@@ -30,6 +31,16 @@ namespace LabInventario
 
         public override void OnFrameworkInitializationCompleted()
         {
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            {
+                if (e.ExceptionObject is Exception ex) Errores.RegistrarEnArchivo(ex);
+            };
+            TaskScheduler.UnobservedTaskException += (_, e) =>
+            {
+                Errores.RegistrarEnArchivo(e.Exception);
+                e.SetObserved();
+            };
+            
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
             {
                 // Nosotros controlamos manualmente cuándo termina la app
