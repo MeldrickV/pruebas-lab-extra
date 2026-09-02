@@ -106,7 +106,7 @@ namespace LabInventario.Views
             var grupoCaptura = Cajas.GroupBox("Captura (escáner)", panelCaptura, 430);
 
             // Panel: lista acumulada
-            _btnConfirmar.Click += async (_, _) => await Confirmar();
+            _btnConfirmar.Click += (_, _) => Errores.Ejecutar(VentanaPropietaria(), Confirmar);
             var panelLista = new StackPanel { Spacing = 10 };
             panelLista.Children.Add(_lstAcumulados);
             panelLista.Children.Add(_btnConfirmar);
@@ -149,7 +149,7 @@ namespace LabInventario.Views
             if (string.IsNullOrEmpty(codigo))
             {
                 if (_alumnoActual is not null && _listaTemporal.Count > 0)
-                    _ = Confirmar();
+                    Errores.Ejecutar(VentanaPropietaria(), Confirmar);
                 _txtEscaneo.Focus();
                 return;
             }
@@ -274,8 +274,13 @@ namespace LabInventario.Views
 
                     exitos++;
                 }
-                catch (PrestamoException error)
+                catch (Exception error)
                 {
+                    // Se atrapa cualquier tipo de excepción (no solo
+                    // PrestamoException): así ningún fallo se pierde en
+                    // silencio, y si algo inesperado ocurre, el mensaje
+                    // real queda visible aquí y también en errores.log.
+                    Errores.RegistrarEnArchivo(error);
                     errores.Add($"{item.Nombre}: {error.Message}");
                 }
             }
