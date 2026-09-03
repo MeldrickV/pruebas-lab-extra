@@ -62,6 +62,7 @@ namespace LabInventario.Views
         private readonly ObservableCollection<FilaPrestamo> _filas = new();
         private readonly HashSet<(int AlumnoId, int MaterialId)> _gruposExpandidos = new();
         private readonly DataGrid _grid;
+        private readonly Dictionary<string, string> _encabezadosBase = new();
         private readonly TextBox _txtFiltro = new() { Width = 260 };
         private readonly CheckBox _chkSoloActivos = new() { Content = "Mostrar solo préstamos activos" };
 
@@ -113,6 +114,13 @@ namespace LabInventario.Views
                 },
             };
             _grid.Sorting += Grid_Sorting;
+
+            foreach (var columna in _grid.Columns)
+            {
+                if (columna.Tag is string clave)
+                    _encabezadosBase[clave] = columna.Header?.ToString() ?? "";
+            }
+            ActualizarEncabezadosOrden();
 
             _txtFiltro.TextChanged += (_, _) => Cargar();
             _chkSoloActivos.PropertyChanged += (_, e) => { if (e.Property == ToggleButton.IsCheckedProperty) Cargar(); };
@@ -190,12 +198,27 @@ namespace LabInventario.Views
                 _ordenDescendente = false;
             }
 
-            foreach (var columna in _grid.Columns)
-                columna.SortDirection = null;
-            e.Column.SortDirection = _ordenDescendente ? DataGridSortDirection.Descending : DataGridSortDirection.Ascending;
-
+            ActualizarEncabezadosOrden();
             Cargar();
             e.Handled = true;
+        }
+
+        /// <summary>
+        /// Agrega ▲/▼ al encabezado de la columna por la que se está
+        /// ordenando (y lo quita de las demás), como señal visual simple
+        /// que no depende de ninguna propiedad especial del control.
+        /// </summary>
+        private void ActualizarEncabezadosOrden()
+        {
+            foreach (var columna in _grid.Columns)
+            {
+                if (columna.Tag is not string clave || !_encabezadosBase.TryGetValue(clave, out var baseTexto))
+                    continue;
+
+                columna.Header = clave == _columnaOrden
+                    ? $"{baseTexto} {(_ordenDescendente ? "▼" : "▲")}"
+                    : baseTexto;
+            }
         }
 
         private List<T> Ordenar<T, TKey>(List<T> lista, Func<T, TKey> selector) =>
