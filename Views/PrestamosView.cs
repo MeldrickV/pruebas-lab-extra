@@ -8,6 +8,7 @@ using Avalonia.Media;
 using LabInventario.Data;
 using LabInventario.Dialogs;
 using LabInventario.Helpers;
+using LabInventario.Models;
 using LabInventario.Services;
 
 namespace LabInventario.Views
@@ -16,18 +17,26 @@ namespace LabInventario.Views
     /// Pestaña de préstamos: historial completo con filtro de búsqueda y
     /// opción de mostrar solo los activos.
     ///
-    /// Los préstamos ACTIVOS del mismo alumno+material se agrupan en una
-    /// sola fila resumen (cantidad total pendiente y fecha del último
-    /// escaneo), con una flecha para expandir y ver el detalle de cada
-    /// registro individual por separado (útil cuando el alumno sacó el
-    /// mismo material en días distintos). Los ya devueltos se muestran
-    /// como filas sueltas, tal como quedaron en su momento.
+    /// Los préstamos ACTIVOS del mismo alumno+material con MÁS DE UNA
+    /// fecha de salida distinta se agrupan en una sola fila resumen
+    /// (cantidad total pendiente y fecha del último escaneo), con una
+    /// flecha para expandir y ver el detalle de cada registro individual
+    /// por separado. Si solo hay una fecha, se muestra como fila normal,
+    /// sin flecha ni comportamiento de grupo. Los ya devueltos se
+    /// muestran como filas sueltas, tal como quedaron en su momento.
+    ///
+    /// El orden de la tabla se puede cambiar tocando cualquier encabezado
+    /// (alumno, cuenta, material, cantidad, fecha, etc., asc/desc). El
+    /// ordenamiento se aplica "a mano" (evento Sorting) en vez de dejar
+    /// que el DataGrid reordene su ItemsSource por su cuenta, porque el
+    /// orden automático rompería la relación entre cada fila-grupo y las
+    /// filas de detalle que dependen de estar justo debajo de ella.
     ///
     /// Al marcar una devolución, si se selecciona la fila-grupo, la
     /// cantidad indicada se descuenta en orden FIFO entre los registros
     /// agrupados (el más antiguo primero). Si se selecciona un registro
-    /// específico dentro del detalle expandido, la devolución se aplica
-    /// solo a ese registro puntual.
+    /// específico dentro del detalle expandido (o una fila sin agrupar),
+    /// la devolución se aplica solo a ese registro puntual.
     /// </summary>
     public class PrestamosView : UserControl
     {
@@ -56,13 +65,20 @@ namespace LabInventario.Views
         private readonly TextBox _txtFiltro = new() { Width = 260 };
         private readonly CheckBox _chkSoloActivos = new() { Content = "Mostrar solo préstamos activos" };
 
+        // Clave de la columna por la que se ordena actualmente ("Alumno",
+        // "Cuenta", "Material", "Codigo", "Cantidad", "Salida", "Regreso",
+        // "Estado") y si el orden es descendente. Por defecto: más
+        // reciente primero, igual que el comportamiento original.
+        private string _columnaOrden = "Salida";
+        private bool _ordenDescendente = true;
+
         public PrestamosView()
         {
             _grid = new DataGrid
             {
                 AutoGenerateColumns = false,
                 IsReadOnly = true,
-                CanUserSortColumns = false, // el orden lo define el agrupado; no se debe romper con un sort libre
+                CanUserSortColumns = true,
                 SelectionMode = DataGridSelectionMode.Single,
                 ItemsSource = _filas,
                 Columns =
@@ -71,6 +87,7 @@ namespace LabInventario.Views
                     {
                         Header = "",
                         Width = new DataGridLength(36),
+                        CanUserSort = false,
                         CellTemplate = new FuncDataTemplate<FilaPrestamo>((fila, _) =>
                         {
                             if (fila is null || !fila.EsGrupo) return new TextBlock();
@@ -85,16 +102,17 @@ namespace LabInventario.Views
                             return boton;
                         }),
                     },
-                    new DataGridTextColumn { Header = "Alumno", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Alumno)), Width = new DataGridLength(1.3, DataGridLengthUnitType.Star) },
-                    new DataGridTextColumn { Header = "Cuenta", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Cuenta)), Width = new DataGridLength(0.9, DataGridLengthUnitType.Star) },
-                    new DataGridTextColumn { Header = "Material", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Material)), Width = new DataGridLength(1.3, DataGridLengthUnitType.Star) },
-                    new DataGridTextColumn { Header = "Código", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Codigo)), Width = new DataGridLength(0.9, DataGridLengthUnitType.Star) },
-                    new DataGridTextColumn { Header = "Cant.", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Cantidad)), Width = new DataGridLength(0.5, DataGridLengthUnitType.Star) },
-                    new DataGridTextColumn { Header = "Fecha salida", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Salida)), Width = new DataGridLength(1.4, DataGridLengthUnitType.Star) },
-                    new DataGridTextColumn { Header = "Fecha regreso", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Regreso)), Width = new DataGridLength(1.2, DataGridLengthUnitType.Star) },
-                    new DataGridTextColumn { Header = "Estado", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Estado)), Width = new DataGridLength(0.8, DataGridLengthUnitType.Star) },
+                    new DataGridTextColumn { Header = "Alumno", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Alumno)), Width = new DataGridLength(1.3, DataGridLengthUnitType.Star), Tag = "Alumno" },
+                    new DataGridTextColumn { Header = "Cuenta", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Cuenta)), Width = new DataGridLength(0.9, DataGridLengthUnitType.Star), Tag = "Cuenta" },
+                    new DataGridTextColumn { Header = "Material", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Material)), Width = new DataGridLength(1.3, DataGridLengthUnitType.Star), Tag = "Material" },
+                    new DataGridTextColumn { Header = "Código", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Codigo)), Width = new DataGridLength(0.9, DataGridLengthUnitType.Star), Tag = "Codigo" },
+                    new DataGridTextColumn { Header = "Cant.", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Cantidad)), Width = new DataGridLength(0.5, DataGridLengthUnitType.Star), Tag = "Cantidad" },
+                    new DataGridTextColumn { Header = "Fecha salida", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Salida)), Width = new DataGridLength(1.4, DataGridLengthUnitType.Star), Tag = "Salida" },
+                    new DataGridTextColumn { Header = "Fecha regreso", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Regreso)), Width = new DataGridLength(1.2, DataGridLengthUnitType.Star), Tag = "Regreso" },
+                    new DataGridTextColumn { Header = "Estado", Binding = new Avalonia.Data.Binding(nameof(FilaPrestamo.Estado)), Width = new DataGridLength(0.8, DataGridLengthUnitType.Star), Tag = "Estado" },
                 },
             };
+            _grid.Sorting += Grid_Sorting;
 
             _txtFiltro.TextChanged += (_, _) => Cargar();
             _chkSoloActivos.PropertyChanged += (_, e) => { if (e.Property == ToggleButton.IsCheckedProperty) Cargar(); };
@@ -104,7 +122,7 @@ namespace LabInventario.Views
 
             var lblAyuda = new TextBlock
             {
-                Text = "Toca ▶ para ver el detalle de cada salida por separado.",
+                Text = "Toca ▶ para ver el detalle, o un encabezado para ordenar.",
                 Foreground = Brushes.DimGray,
                 FontSize = 11,
                 VerticalAlignment = VerticalAlignment.Center,
@@ -146,18 +164,64 @@ namespace LabInventario.Views
             Cargar();
         }
 
+        /// <summary>
+        /// Maneja el clic en un encabezado de columna: alterna la
+        /// dirección si es la misma columna, o cambia de columna con
+        /// orden ascendente. Se marca <c>e.Handled = true</c> para que el
+        /// DataGrid NO haga su propio ordenamiento automático del
+        /// ItemsSource (eso separaría cada fila-grupo de su detalle
+        /// expandido); en vez de eso, reconstruimos la lista nosotros
+        /// mismos respetando el agrupado.
+        /// </summary>
+        private void Grid_Sorting(object? sender, DataGridColumnEventArgs e)
+        {
+            var clave = e.Column.Tag as string;
+            if (clave is null)
+            {
+                e.Handled = true;
+                return;
+            }
+
+            if (_columnaOrden == clave)
+                _ordenDescendente = !_ordenDescendente;
+            else
+            {
+                _columnaOrden = clave;
+                _ordenDescendente = false;
+            }
+
+            foreach (var columna in _grid.Columns)
+                columna.SortDirection = null;
+            e.Column.SortDirection = _ordenDescendente ? DataGridSortDirection.Descending : DataGridSortDirection.Ascending;
+
+            Cargar();
+            e.Handled = true;
+        }
+
+        private List<T> Ordenar<T, TKey>(List<T> lista, Func<T, TKey> selector) =>
+            (_ordenDescendente ? lista.OrderByDescending(selector) : lista.OrderBy(selector)).ToList();
+
         private void Cargar()
         {
             _filas.Clear();
 
             var detallados = _repo.ListarDetallado(_txtFiltro.Text?.Trim() ?? "", _chkSoloActivos.IsChecked == true);
             var activos = detallados.Where(p => p.Estado == "Activo").ToList();
-            var devueltos = detallados
-                .Where(p => p.Estado != "Activo")
-                .OrderByDescending(p => p.FechaRegreso ?? p.FechaSalida) // las devoluciones más recientes primero
-                .ToList();
 
-            var grupos = activos
+            var devueltosBase = detallados.Where(p => p.Estado != "Activo").ToList();
+            var devueltos = _columnaOrden switch
+            {
+                "Alumno" => Ordenar(devueltosBase, p => p.AlumnoNombre),
+                "Cuenta" => Ordenar(devueltosBase, p => p.NumeroCuenta),
+                "Material" => Ordenar(devueltosBase, p => p.MaterialNombre),
+                "Codigo" => Ordenar(devueltosBase, p => p.CodigoBarras),
+                "Cantidad" => Ordenar(devueltosBase, p => p.Cantidad),
+                "Regreso" => Ordenar(devueltosBase, p => p.FechaRegreso ?? p.FechaSalida),
+                "Estado" => Ordenar(devueltosBase, p => p.Estado),
+                _ => Ordenar(devueltosBase, p => p.FechaSalida), // "Salida" (por defecto)
+            };
+
+            var gruposBase = activos
                 .GroupBy(p => (p.AlumnoId, p.MaterialId))
                 .Select(g => new
                 {
@@ -171,8 +235,17 @@ namespace LabInventario.Views
                     UltimaSalida = g.Max(x => x.FechaSalida),
                     Detalle = g.OrderBy(x => x.FechaSalida).ToList(),
                 })
-                .OrderByDescending(g => g.UltimaSalida)
                 .ToList();
+
+            var grupos = _columnaOrden switch
+            {
+                "Alumno" => Ordenar(gruposBase, g => g.Alumno),
+                "Cuenta" => Ordenar(gruposBase, g => g.Cuenta),
+                "Material" => Ordenar(gruposBase, g => g.Material),
+                "Codigo" => Ordenar(gruposBase, g => g.Codigo),
+                "Cantidad" => Ordenar(gruposBase, g => g.Total),
+                _ => Ordenar(gruposBase, g => g.UltimaSalida), // "Salida"/"Regreso"/"Estado": los activos no tienen fecha de regreso ni distintos estados, se cae a la fecha de salida
+            };
 
             foreach (var grupo in grupos)
             {
