@@ -85,8 +85,8 @@ namespace LabInventario.Windows
             {
                 Content = "Entrar",
                 Classes = { "Flat" },
-                Width = 110,
-                Height = 34,
+                MinWidth = 110,
+                MinHeight = 34,
                 IsDefault = true,
                 HorizontalAlignment = HorizontalAlignment.Right,
             };
