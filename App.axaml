@@ -14,6 +14,6 @@
             "Blue" de partida se sustituye en tiempo de ejecución
             (ver App.axaml.cs) por la paleta institucional de la UAS.
         -->
-        <suki:SukiTheme x:Name="SukiTheme" Locale="es-ES" ThemeColor="Blue" />
+        <suki:SukiTheme Locale="es-ES" ThemeColor="Blue" />
     </Application.Styles>
 </Application>
