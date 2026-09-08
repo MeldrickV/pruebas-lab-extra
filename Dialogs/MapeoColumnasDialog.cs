@@ -1,115 +1,89 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
-using Avalonia.Media;
+using LabInventario.Helpers;
+using LabInventario.Models;
 using SukiUI.Controls;
 
 namespace LabInventario.Dialogs
 {
     /// <summary>
-    /// Permite al usuario confirmar o corregir gráficamente el mapeo entre
-    /// las columnas detectadas en el archivo y los campos que el sistema
-    /// necesita, mostrando una vista previa de los datos para facilitar
-    /// la decisión.
+    /// Formulario modal para crear o editar un material.
+    /// La cantidad disponible solo se muestra al editar (al crear siempre
+    /// arranca igual a la cantidad total, pues aún no hay préstamos).
     /// </summary>
-    public class MapeoColumnasDialog : SukiWindow
+    public class MaterialDialog : SukiWindow
     {
-        private readonly Dictionary<string, ComboBox> _combos = new();
+        private readonly TextBox _txtCodigo = new() { Width = 280 };
+        private readonly TextBox _txtNombre = new() { Width = 280 };
+        private readonly NumericUpDown _numTotal = new() { Width = 280, Minimum = 0, Maximum = 100000, FormatString = "0" };
+        private readonly NumericUpDown? _numDisponible;
+        private readonly bool _esEdicion;
 
-        public Dictionary<string, int?>? Resultado { get; private set; }
+        public (string CodigoBarras, string Nombre, int CantidadTotal, int CantidadDisponible)? Resultado { get; private set; }
 
-        public MapeoColumnasDialog(List<string> headers, string[] camposDestino,
-            Dictionary<string, int?> mapeoSugerido, List<List<string?>> vistaPrevia)
+        public MaterialDialog(Material? material = null)
         {
-            Title = "Mapeo de columnas para importación";
+            _esEdicion = material is not null;
+            Title = _esEdicion ? "Editar material" : "Nuevo material";
             CanResize = false;
             CanMinimize = false;
             CanFullScreen = false;
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             SizeToContent = SizeToContent.WidthAndHeight;
 
-            var lblTitulo = new TextBlock
+            _txtCodigo.Text = material?.CodigoBarras ?? "";
+            _txtNombre.Text = material?.Nombre ?? "";
+            _numTotal.Value = material?.CantidadTotal ?? 0;
+
+            var panel = new StackPanel { Spacing = 6, Width = 320 };
+            panel.Children.Add(new TextBlock { Text = "Código de barras:" });
+            panel.Children.Add(_txtCodigo);
+            panel.Children.Add(new TextBlock { Text = "Nombre del elemento:", Margin = new Avalonia.Thickness(0, 10, 0, 0) });
+            panel.Children.Add(_txtNombre);
+            panel.Children.Add(new TextBlock { Text = "Cantidad total:", Margin = new Avalonia.Thickness(0, 10, 0, 0) });
+            panel.Children.Add(_numTotal);
+
+            if (_esEdicion)
             {
-                Text = "Asocia cada campo del sistema con la columna correspondiente del archivo:",
-                Classes = { "h5" },
-                TextWrapping = TextWrapping.Wrap,
-                Width = 530,
-            };
-
-            var opciones = new List<string> { "(ignorar)" };
-            opciones.AddRange(headers);
-
-            var grid = new Grid { Margin = new Avalonia.Thickness(0, 10, 0, 0) };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(150) });
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(280) });
-
-            for (var i = 0; i < camposDestino.Length; i++)
-            {
-                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-                var campo = camposDestino[i];
-                var lbl = new TextBlock { Text = campo, VerticalAlignment = VerticalAlignment.Center, Margin = new Avalonia.Thickness(0, 4, 0, 4) };
-                Grid.SetRow(lbl, i);
-                Grid.SetColumn(lbl, 0);
-
-                var combo = new ComboBox { ItemsSource = opciones, Width = 260, Margin = new Avalonia.Thickness(0, 4, 0, 4) };
-                var indiceSugerido = mapeoSugerido.TryGetValue(campo, out var idx) ? idx : null;
-                combo.SelectedIndex = indiceSugerido.HasValue ? indiceSugerido.Value + 1 : 0;
-                Grid.SetRow(combo, i);
-                Grid.SetColumn(combo, 1);
-
-                grid.Children.Add(lbl);
-                grid.Children.Add(combo);
-                _combos[campo] = combo;
+                _numDisponible = new NumericUpDown { Width = 280, Minimum = 0, Maximum = 100000, FormatString = "0", Value = material!.CantidadDisponible };
+                panel.Children.Add(new TextBlock { Text = "Cantidad disponible:", Margin = new Avalonia.Thickness(0, 10, 0, 0) });
+                panel.Children.Add(_numDisponible);
             }
 
-            var lblPreview = new TextBlock { Text = "Vista previa (primeras filas del archivo):", Classes = { "Caption" }, Margin = new Avalonia.Thickness(0, 15, 0, 4) };
+            var btnGuardar = new Button { Content = "Guardar", Classes = { "Flat" }, MinWidth = 90, IsDefault = true };
+            btnGuardar.Click += async (_, _) => await Guardar();
 
-            var lineas = new List<string> { string.Join(" | ", headers) };
-            lineas.AddRange(vistaPrevia.Take(5).Select(fila => string.Join(" | ", fila.Select(v => v ?? ""))));
-
-            var txtPreview = new TextBox
-            {
-                Text = string.Join(Environment.NewLine, lineas),
-                Width = 530,
-                Height = 120,
-                IsReadOnly = true,
-                AcceptsReturn = true,
-                TextWrapping = TextWrapping.NoWrap,
-                FontFamily = new FontFamily("Consolas,monospace"),
-                FontSize = 12,
-            };
-            ScrollViewer.SetHorizontalScrollBarVisibility(txtPreview, Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);
-            ScrollViewer.SetVerticalScrollBarVisibility(txtPreview, Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);
-
-            var btnImportar = new Button { Content = "Importar", Classes = { "Flat" }, MinWidth = 110, IsDefault = true };
-            btnImportar.Click += (_, _) => Confirmar();
-
-            var btnCancelar = new Button { Content = "Cancelar", Classes = { "Outlined" }, MinWidth = 110, IsCancel = true };
+            var btnCancelar = new Button { Content = "Cancelar", Classes = { "Outlined" }, MinWidth = 90, IsCancel = true };
             btnCancelar.Click += (_, _) => Close();
 
             var panelBotones = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Avalonia.Thickness(0, 14, 0, 0) };
-            panelBotones.Children.Add(btnImportar);
+            panelBotones.Children.Add(btnGuardar);
             panelBotones.Children.Add(btnCancelar);
-
-            var panel = new StackPanel { Spacing = 4, Width = 530 };
-            panel.Children.Add(lblTitulo);
-            panel.Children.Add(grid);
-            panel.Children.Add(lblPreview);
-            panel.Children.Add(txtPreview);
             panel.Children.Add(panelBotones);
 
             Content = new GlassCard { Margin = new Avalonia.Thickness(20), Content = panel };
         }
 
-        private void Confirmar()
+        private async Task Guardar()
         {
-            var mapeoFinal = new Dictionary<string, int?>();
-            foreach (var (campo, combo) in _combos)
+            var codigo = _txtCodigo.Text?.Trim() ?? "";
+            var nombre = _txtNombre.Text?.Trim() ?? "";
+            var total = (int)(_numTotal.Value ?? 0);
+            var disponible = _numDisponible is not null ? (int)(_numDisponible.Value ?? 0) : total;
+
+            if (string.IsNullOrEmpty(codigo) || string.IsNullOrEmpty(nombre))
             {
-                var seleccionado = combo.SelectedIndex; // 0 = "(ignorar)"
-                mapeoFinal[campo] = seleccionado <= 0 ? null : seleccionado - 1;
+                await Dialogos.MostrarAdvertencia(this, "Código de barras y nombre son obligatorios.", "Datos incompletos");
+                return;
             }
-            Resultado = mapeoFinal;
+
+            if (disponible > total)
+            {
+                await Dialogos.MostrarAdvertencia(this, "La cantidad disponible no puede superar la cantidad total.", "Dato inválido");
+                return;
+            }
+
+            Resultado = (codigo, nombre, total, disponible);
             Close();
         }
     }
