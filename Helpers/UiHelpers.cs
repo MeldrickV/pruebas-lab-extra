@@ -110,6 +110,12 @@ namespace LabInventario.Helpers
     /// aspecto de "tarjeta" del resto de la librería, manteniendo la misma
     /// firma que antes (<c>Cajas.GroupBox(titulo, contenido, ancho)</c>)
     /// para no tener que tocar las vistas que ya la usan.
+    ///
+    /// El "ancho" que reciben las vistas se aplica como <c>MinWidth</c> (no
+    /// como <c>Width</c> fijo): así la tarjeta nunca queda más angosta de lo
+    /// pensado, pero si el contenedor que la aloja le da más espacio (por
+    /// ejemplo, una columna de <see cref="Grid"/> con ancho "*"), la
+    /// tarjeta lo aprovecha en vez de quedarse pegada a un tamaño fijo.
     /// </summary>
     public static class Cajas
     {
@@ -119,13 +125,15 @@ namespace LabInventario.Helpers
             {
                 Header = titulo,
                 Content = contenido,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
             };
 
             var tarjeta = new GlassCard
             {
                 Content = caja,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
             };
-            if (width.HasValue) tarjeta.Width = width.Value;
+            if (width.HasValue) tarjeta.MinWidth = width.Value;
             return tarjeta;
         }
     }
