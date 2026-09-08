@@ -81,10 +81,10 @@ namespace LabInventario.Dialogs
             ScrollViewer.SetHorizontalScrollBarVisibility(txtPreview, Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);
             ScrollViewer.SetVerticalScrollBarVisibility(txtPreview, Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);
 
-            var btnImportar = new Button { Content = "Importar", Classes = { "Flat" }, Width = 110, IsDefault = true };
+            var btnImportar = new Button { Content = "Importar", Classes = { "Flat" }, MinWidth = 110, IsDefault = true };
             btnImportar.Click += (_, _) => Confirmar();
 
-            var btnCancelar = new Button { Content = "Cancelar", Classes = { "Outlined" }, Width = 110, IsCancel = true };
+            var btnCancelar = new Button { Content = "Cancelar", Classes = { "Outlined" }, MinWidth = 110, IsCancel = true };
             btnCancelar.Click += (_, _) => Close();
 
             var panelBotones = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Avalonia.Thickness(0, 14, 0, 0) };
