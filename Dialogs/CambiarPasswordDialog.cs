@@ -26,10 +26,10 @@ namespace LabInventario.Dialogs
             WindowStartupLocation = WindowStartupLocation.CenterOwner;
             SizeToContent = SizeToContent.WidthAndHeight;
 
-            var btnGuardar = new Button { Content = "Guardar", Classes = { "Flat" }, Width = 100, IsDefault = true };
+            var btnGuardar = new Button { Content = "Guardar", Classes = { "Flat" }, MinWidth = 100, IsDefault = true };
             btnGuardar.Click += async (_, _) => await Guardar();
 
-            var btnCancelar = new Button { Content = "Cancelar", Classes = { "Outlined" }, Width = 100, IsCancel = true };
+            var btnCancelar = new Button { Content = "Cancelar", Classes = { "Outlined" }, MinWidth = 100, IsCancel = true };
             btnCancelar.Click += (_, _) => Close();
 
             var panelBotones = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Right, Margin = new Avalonia.Thickness(0, 14, 0, 0) };
