@@ -35,14 +35,14 @@ namespace LabInventario.Dialogs
                 FormatString = "0",
             };
 
-            var btnAceptar = new Button { Content = "Aceptar", Classes = { "Flat" }, Width = 90, IsDefault = true };
+            var btnAceptar = new Button { Content = "Aceptar", Classes = { "Flat" }, MinWidth = 90, IsDefault = true };
             btnAceptar.Click += (_, _) =>
             {
                 Resultado = (int)(_numCantidad.Value ?? valorInicial);
                 Close();
             };
 
-            var btnCancelar = new Button { Content = "Cancelar", Classes = { "Outlined" }, Width = 90, IsCancel = true };
+            var btnCancelar = new Button { Content = "Cancelar", Classes = { "Outlined" }, MinWidth = 90, IsCancel = true };
             btnCancelar.Click += (_, _) => Close();
 
             var panelBotones = new StackPanel
