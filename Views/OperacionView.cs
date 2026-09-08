@@ -50,23 +50,23 @@ namespace LabInventario.Views
         private readonly RadioButton _radioSalida = new() { Content = "Salida (préstamo)", GroupName = "modo", IsChecked = true };
         private readonly RadioButton _radioEntrada = new() { Content = "Entrada (devolución)", GroupName = "modo" };
 
-        private readonly TextBox _txtEscaneo = new() { Width = 360, FontSize = 16 };
+        private readonly TextBox _txtEscaneo = new() { FontSize = 16, HorizontalAlignment = HorizontalAlignment.Stretch };
         private readonly NumericUpDown _numCantidad = new() { Minimum = 1, Maximum = 999, Value = 1, Width = 90, FormatString = "0" };
 
-        private readonly ListBox _lstAcumulados = new() { Width = 340, Height = 220, FontSize = 13 };
+        private readonly ListBox _lstAcumulados = new() { Height = 220, FontSize = 13, HorizontalAlignment = HorizontalAlignment.Stretch };
         private readonly Button _btnConfirmar = new()
         {
             Content = "ACEPTAR (o Enter en blanco)",
             Classes = { "Success" },
             Height = 45,
-            Width = 340,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
             FontSize = 13,
             FontWeight = FontWeight.Bold,
         };
 
         private readonly TextBlock _lblEscaneo = new() { Text = "Escanea: credencial del alumno", FontWeight = FontWeight.Bold };
         private readonly TextBlock _lblAlumnoInfo = new() { Text = "Alumno: (esperando escaneo)", FontStyle = FontStyle.Italic };
-        private readonly TextBlock _lblEstado = new() { TextWrapping = TextWrapping.Wrap, FontWeight = FontWeight.Bold, Width = 760, Height = 55 };
+        private readonly TextBlock _lblEstado = new() { TextWrapping = TextWrapping.Wrap, FontWeight = FontWeight.Bold, Height = 55, HorizontalAlignment = HorizontalAlignment.Stretch };
 
         public OperacionView()
         {
@@ -87,12 +87,11 @@ namespace LabInventario.Views
                 Text = "Escanea el carnet, luego cada material (se puede repetir el mismo\n" +
                        "material para sumar cantidad). Para enviar la solicitud, presiona\n" +
                        "Enter con el cuadro vacío.",
-                Foreground = Brushes.DimGray,
-                Width = 390,
+                Classes = { "Caption" },
                 TextWrapping = TextWrapping.Wrap,
             };
 
-            var btnLimpiar = new Button { Content = "Cancelar / Limpiar todo", Classes = { "Outlined" }, Width = 200 };
+            var btnLimpiar = new Button { Content = "Cancelar / Limpiar todo", Classes = { "Outlined" }, MinWidth = 200 };
             btnLimpiar.Click += (_, _) => Limpiar();
 
             var panelCaptura = new StackPanel { Spacing = 8 };
@@ -111,16 +110,25 @@ namespace LabInventario.Views
             panelLista.Children.Add(_btnConfirmar);
             var grupoLista = Cajas.GroupBox("Lista de equipos a procesar", panelLista, 380);
 
-            // Columna izquierda (modo + captura) y derecha (lista)
-            var columnaIzquierda = new StackPanel { Spacing = 15 };
+            // Columna izquierda (modo + captura) y derecha (lista).
+            // Se usa un Grid con columnas "*" (en vez del StackPanel
+            // horizontal anterior) porque un StackPanel nunca reparte el
+            // espacio sobrante entre sus hijos: cada uno se queda en su
+            // ancho mínimo y el resto de la ventana se ve vacío. Con
+            // columnas "*", ambas mitades crecen junto con la ventana.
+            var columnaIzquierda = new StackPanel { Spacing = 15, HorizontalAlignment = HorizontalAlignment.Stretch };
             columnaIzquierda.Children.Add(grupoModo);
             columnaIzquierda.Children.Add(grupoCaptura);
 
-            var filaSuperior = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 15 };
+            var filaSuperior = new Grid { ColumnSpacing = 15 };
+            filaSuperior.ColumnDefinitions.Add(new ColumnDefinition(1.1, GridUnitType.Star));
+            filaSuperior.ColumnDefinitions.Add(new ColumnDefinition(1, GridUnitType.Star));
+            Grid.SetColumn(columnaIzquierda, 0);
+            Grid.SetColumn(grupoLista, 1);
             filaSuperior.Children.Add(columnaIzquierda);
             filaSuperior.Children.Add(grupoLista);
 
-            var raiz = new StackPanel { Margin = new Avalonia.Thickness(15), Spacing = 15 };
+            var raiz = new StackPanel { Margin = new Avalonia.Thickness(15), Spacing = 15, HorizontalAlignment = HorizontalAlignment.Stretch };
             raiz.Children.Add(filaSuperior);
             raiz.Children.Add(_lblAlumnoInfo);
             raiz.Children.Add(_lblEstado);
