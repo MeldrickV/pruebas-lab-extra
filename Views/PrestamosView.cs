@@ -125,7 +125,7 @@ namespace LabInventario.Views
             _txtFiltro.TextChanged += (_, _) => Cargar();
             _chkSoloActivos.PropertyChanged += (_, e) => { if (e.Property == ToggleButton.IsCheckedProperty) Cargar(); };
 
-            var btnDevolver = new Button { Content = "Marcar como devuelto", Classes = { "Flat" }, Width = 180 };
+            var btnDevolver = new Button { Content = "Marcar como devuelto", Classes = { "Flat" }, MinWidth = 180 };
             btnDevolver.Click += (_, _) => Errores.Ejecutar(VentanaPropietaria(), MarcarDevuelto);
 
             var lblAyuda = new TextBlock
