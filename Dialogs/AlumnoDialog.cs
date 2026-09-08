@@ -30,10 +30,10 @@ namespace LabInventario.Dialogs
             _txtNombre.Text = alumno?.Nombre ?? "";
             _txtCuenta.Text = alumno?.NumeroCuenta ?? "";
 
-            var btnGuardar = new Button { Content = "Guardar", Classes = { "Flat" }, Width = 90, IsDefault = true };
+            var btnGuardar = new Button { Content = "Guardar", Classes = { "Flat" }, MinWidth = 90, IsDefault = true };
             btnGuardar.Click += async (_, _) => await Guardar();
 
-            var btnCancelar = new Button { Content = "Cancelar", Classes = { "Outlined" }, Width = 90, IsCancel = true };
+            var btnCancelar = new Button { Content = "Cancelar", Classes = { "Outlined" }, MinWidth = 90, IsCancel = true };
             btnCancelar.Click += (_, _) => Close();
 
             var panelBotones = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10, HorizontalAlignment = HorizontalAlignment.Right };
