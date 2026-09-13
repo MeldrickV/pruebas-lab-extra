@@ -56,7 +56,23 @@ namespace LabInventario.Tests
         public virtual void Dispose()
         {
             if (Directory.Exists(_carpetaTemporal))
-                Directory.Delete(_carpetaTemporal, recursive: true);
+            {
+                // En Windows, SQLite puede mantener locks en la BD, así que reintentamos
+                // con pequeños delays para darle tiempo a liberar recursos.
+                int maxIntents = 5;
+                for (int i = 0; i < maxIntents; i++)
+                {
+                    try
+                    {
+                        Directory.Delete(_carpetaTemporal, recursive: true);
+                        break;
+                    }
+                    catch (IOException) when (i < maxIntents - 1)
+                    {
+                        System.Threading.Thread.Sleep(100);
+                    }
+                }
+            }
         }
     }
 }
