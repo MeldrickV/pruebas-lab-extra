@@ -1,0 +1,26 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:suki="https://github.com/kikipoulet/SukiUI"
+             x:Class="LabInventario.App">
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+        <suki:SukiTheme Locale="es-ES" ThemeColor="Blue" />
+
+        <Style Selector="Button">
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="TextBlock">
+            <Setter Property="FontSize" Value="13"/>
+        </Style>
+        <Style Selector="DataGridColumnHeader">
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="DataGridCell">
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style Selector="ListBoxItem">
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+    </Application.Styles>
+</Application>
