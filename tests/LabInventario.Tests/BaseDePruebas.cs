@@ -55,22 +55,39 @@ namespace LabInventario.Tests
 
         public virtual void Dispose()
         {
+            // Cerrar explícitamente la conexión a SQLite (crítico en Windows)
+            try
+            {
+                Db?.Dispose();
+            }
+            catch { }
+
+            // Liberar los repositorios
+            (Alumnos as IDisposable)?.Dispose();
+            (Materiales as IDisposable)?.Dispose();
+            (Prestamos as IDisposable)?.Dispose();
+            (Servicio as IDisposable)?.Dispose();
+
+            // Forzar garbage collection para liberar handles
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            // Ahora intentar eliminar la carpeta con reintentos
             if (Directory.Exists(_carpetaTemporal))
             {
-                // En Windows, SQLite puede mantener locks en la BD, así que reintentamos
-                // con pequeños delays para darle tiempo a liberar recursos.
-                int maxIntents = 5;
-                for (int i = 0; i < maxIntents; i++)
+                const int maxRetries = 10;
+                for (int retry = 0; retry < maxRetries; retry++)
                 {
                     try
                     {
                         Directory.Delete(_carpetaTemporal, recursive: true);
-                        break;
+                        return; // Éxito, salir
                     }
-                    catch (IOException) when (i < maxIntents - 1)
+                    catch (IOException) when (retry < maxRetries - 1)
                     {
-                        System.Threading.Thread.Sleep(100);
+                        System.Threading.Thread.Sleep(200); // Esperar más tiempo
                     }
+                    catch { }
                 }
             }
         }
